@@ -14,7 +14,7 @@ FPS = 25
 DT = 1 / FPS
 
 def load_race_session(year, round_number, session_type='R'):
-    # session_type: 'R' (Race), 'S' (Sprint), 'SQ' (Sprint Qualifying), etc.
+    # session_type: 'R' (Race), 'S' (Sprint) etc.
     session = fastf1.get_session(year, round_number, session_type)
     session.load(telemetry=True)
     return session

@@ -246,27 +246,6 @@ class F1ReplayWindow(arcade.Window):
                              20, self.height - 120, 
                              arcade.color.BROWN, 24, bold=True, anchor_y="top").draw()
 
-
-        # Track Status (shown below race time, updates live)
-        status_label = "Green"
-        if current_track_status == "2":
-            status_label = "Yellow Flag"
-        elif current_track_status == "4":
-            status_label = "Safety Car"
-        elif current_track_status == "5":
-            status_label = "Red Flag"
-        elif current_track_status == "6" or current_track_status == "7":
-            status_label = "Virtual Safety Car"
-
-        arcade.Text(
-            f"Track: {status_label}",
-            20,
-            self.height - 120,
-            track_color,
-            20,
-            anchor_y="top",
-        ).draw()
-
         # Draw Leaderboard - Top Right
         leaderboard_x = self.width - 220
         leaderboard_y = self.height - 40
