@@ -3,7 +3,6 @@ from src.arcade_replay import run_arcade_replay
 import sys
 
 def main(year=None, round_number=None, playback_speed=1, session_type='R'):
-
   session = load_race_session(year, round_number, session_type)
   print(f"Loaded session: {session.event['EventName']} - {session.event['RoundNumber']}")
 

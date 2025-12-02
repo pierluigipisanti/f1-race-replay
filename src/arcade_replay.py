@@ -56,6 +56,7 @@ class F1ReplayWindow(arcade.Window):
         self.paused = False
         self._tyre_textures = {}
         self.total_laps = total_laps
+        self.has_weather = any("weather" in frame for frame in frames) if frames else False
 
         # Rotation (degrees) to apply to the whole circuit around its centre
         self.circuit_rotation = circuit_rotation
@@ -235,6 +236,17 @@ class F1ReplayWindow(arcade.Window):
         sy = self.world_scale * y + self.ty
         return sx, sy
 
+    def _format_wind_direction(self, degrees):
+        if degrees is None:
+            return "N/A"
+        deg_norm = degrees % 360
+        dirs = [
+            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+        ]
+        idx = int((deg_norm / 22.5) + 0.5) % len(dirs)
+        return dirs[idx]
+
     def on_draw(self):
         self.clear()
 
@@ -357,6 +369,57 @@ class F1ReplayWindow(arcade.Window):
                              20, self.height - 120, 
                              arcade.color.BROWN, 24, bold=True, anchor_y="top").draw()
 
+        # Weather Panel - Top Left block under session info
+        weather_info = frame.get("weather") if frame else None
+        panel_left = 20
+        panel_width = 280
+        panel_height = 130
+        panel_top = self.height - 170
+        weather_bottom = None
+        if weather_info or self.has_weather:
+            arcade.Text(
+                "Weather",
+                panel_left + 12,
+                panel_top - 10,
+                arcade.color.WHITE,
+                18,
+                bold=True,
+                anchor_y="top"
+            ).draw()
+
+            def _fmt(val, suffix="", precision=1):
+                return f"{val:.{precision}f}{suffix}" if val is not None else "N/A"
+
+            info = weather_info or {}
+            track_temp_text = f"🌡️ Track: {_fmt(info.get('track_temp'), '°C')}"
+            air_temp_text = f"🌡️ Air: {_fmt(info.get('air_temp'), '°C')}"
+            humidity_text = f"💧 Humidity: {_fmt(info.get('humidity'), '%', precision=0)}"
+            wind_dir_text = self._format_wind_direction(info.get('wind_direction'))
+            wind_speed_text = _fmt(info.get('wind_speed'), ' km/h')
+            wind_text = f" 🌬️ Wind: {wind_speed_text} {wind_dir_text}"
+            rain_state = info.get('rain_state', 'N/A')
+            rain_text = f"🌧️ Rain: {rain_state}"
+
+            weather_lines = [
+                track_temp_text,
+                air_temp_text,
+                humidity_text,
+                wind_text,
+                rain_text,
+            ]
+
+            start_y = panel_top - 36
+            line_spacing = 22
+            for idx, line in enumerate(weather_lines):
+                arcade.Text(
+                    line,
+                    panel_left + 12,
+                    start_y - idx * line_spacing,
+                    arcade.color.LIGHT_GRAY,
+                    14,
+                    anchor_y="top"
+                ).draw()
+            weather_bottom = panel_top - panel_height
 
         # Draw Leaderboard - Top Right (inside the reserved right UI margin)
         leaderboard_x = max(20, self.width - self.right_ui_margin + 12)
@@ -467,9 +530,17 @@ class F1ReplayWindow(arcade.Window):
             driver_color = self.driver_colors.get(self.selected_driver, arcade.color.GRAY)
 
             info_x = 20
-            info_y = self.height / 2 + 100
+            default_info_y = self.height / 2 + 100
             box_width = 300
             box_height = 150
+            # Keep the driver box below the weather panel if present, but above the controls legend
+            if weather_bottom is not None:
+                target_top = weather_bottom - 20
+                info_y = min(default_info_y, target_top - box_height / 2)
+            else:
+                info_y = default_info_y
+            min_info_y = 220  # stay above controls legend
+            info_y = max(info_y, min_info_y + box_height / 2)
             
             # Background box
 
